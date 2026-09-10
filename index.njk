@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="robots" content="noindex" />
+    <title>Content Manager</title>
+  </head>
+  <body>
+    <script src="https://unpkg.com/decap-cms@3.9.0/dist/decap-cms.js"></script>
+    <script
+      src="https://cdnjs.cloudflare.com/ajax/libs/showdown/2.1.0/showdown.min.js"
+      integrity="sha512-LhccdVNGe2QMEfI3x4DVV3ckMRe36TfydKss6mJpdHjNFiV07dFpS2xzeZedptKZrwxfICJpez09iNioiSZ3hA=="
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer"
+    ></script>
+    <script
+      src="https://unpkg.com/slugify@1.6.6/slugify.js"
+      crossorigin="anonymous"
+    ></script>
+    <script>
+      const convertDate = (dateStr) => {
+          const months = [
+              "January", "February", "March", "April", "May", "June",
+              "July", "August", "September", "October", "November", "December"
+          ];
+          const suffixes = ["th", "st", "nd", "rd"];
+          function getDaySuffix(day) {
+              if (day > 3 && day < 21) return "th"; // Covers 11th, 12th, 13th
+              switch (day % 10) {
+                  case 1: return suffixes[1];
+                  case 2: return suffixes[2];
+                  case 3: return suffixes[3];
+                  default: return suffixes[0];
+              }
+          }
+          const [year, month, day] = dateStr.split('-');
+          if (!year || !month || !day) {
+              return "";
+          }
+          const dayNumber = parseInt(day, 10);
+          const monthName = months[parseInt(month, 10) - 1];
+          const daySuffix = getDaySuffix(dayNumber);
+          return `${dayNumber}${daySuffix} ${monthName} ${year}`;
+      };
+
+
+      const getImage = async (imageIndex) => {
+
+        const convertBlobToBase64 = (blob) => {
+          return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onloadend = () => resolve(reader.result);
+            reader.onerror = reject;
+            reader.readAsDataURL(blob);
+          });
+        };
+
+        const allImages = document.querySelectorAll('img[role="presentation"]');
+        if (allImages.length < imageIndex + 1) {
+          return "";
+        }
+        const img = allImages[imageIndex];
+        const response = await fetch(img.src);
+        const blob = await response.blob();
+        const base64 = await convertBlobToBase64(blob);
+        return base64;
+      };
+
+
+      let converter = new showdown.Converter({
+        sanitize: false
+      });
+      converter.setOption('tables', true);
+
+
+      const Preview = createClass({
+        componentDidUpdate: async function() {
+          const entry = this.props.entry;
+          const data = entry.getIn(['data']).toJS();
+          let imageCount = 0;
+          if (data.date) {
+            data.date = convertDate(data.date);
+          }
+          if (data.leadImage) {
+            data.leadImage = await getImage(imageCount);
+            if (data.leadImage) {
+              imageCount++;
+            }
+          }
+          for (let component of data.components || []) {
+            if (component.type === "bodyText" || component.type === "doubleColumn") {
+              component.content = converter.makeHtml( component.content?.replace(/<!--[\s\S]*?-->/g, '') );
+
+              // convert any inline images
+              const matches = component.content.match(/<img src="[^"]*"/g);
+              if (matches) {
+                for (const match of matches) {
+                  const oldUrl = match
+                    .replace('<img src="', "")
+                    .replace('"', "");
+                  const newUrl = await getImage(imageCount);
+                  imageCount ++;
+                  component.content = component.content.replace(oldUrl, newUrl);
+                }
+              }
+
+            }
+            if (component.type === "doubleColumn") {
+              component.content = converter.makeHtml( component.content?.replace(/<!--[\s\S]*?-->/g, '') );
+              component.content = component.content.replace(/"/g, "&quot;");
+              component.image = await getImage(imageCount);
+              if (component.image) {
+                imageCount++;
+              }
+            }
+            if (component.type === "carousel") {
+              const items = component.carouselItems?.length ? component.carouselItems.map((item) => item.carouselContent) : [];
+              component.carouselItems = JSON.stringify(items).replace(/"/g, '&quot;');
+            }
+          }
+
+          if (data.content) {
+
+
+            if (!data.components) {
+              // convert any inline images
+              const matches = data.content.match(/<img src="[^"]*"/g);
+              if (matches) {
+                for (const match of matches) {
+                  const oldUrl = match
+                    .replace('<img src="', "")
+                    .replace('"', "");
+                  const newUrl = await getImage(imageCount);
+                  imageCount ++;
+                  data.content = data.content.replace(oldUrl, newUrl);
+                }
+              }
+            }
+          }
+
+        if (data.images && data.images.length > 0) {
+          for (const image of data.images) {
+            image.image = await getImage(imageCount);
+            imageCount++;
+          }
+        }
+        if (data.image) {
+          data.image = await getImage(imageCount);
+          imageCount++
+        }
+        if (data.secondImage) {
+          data.secondImage = await getImage(imageCount);
+          imageCount++;
+        }
+
+          this.iframe.contentWindow.postMessage(data, "*");
+          // in case this is sent before the the preview has loaded
+          this.iframe.addEventListener("load", () => {
+            this.iframe.contentWindow.postMessage(data, "*")
+          });
+
+        },
+        render: function() {
+          let previewUrl = "";
+          const entryTitle = window.location.hash.split("/").pop();
+          const collection = window.location.hash.split("/")[2];
+          const data = this.props.entry.getIn(['data']).toJS();
+
+          const getSlug = (fallBackSlug, lower = true) => {
+            if (entryTitle === 'new') {
+              return fallBackSlug;
+            }
+            return data.slug ?? slugify(data.title ?? 'fallBackSlug', { lower: lower });
+          };
+
+          if (window.location.hash.includes("collections/blogs")) {
+            previewUrl = "https://ai.gov.uk/blogs/preview";
+          } else if (window.location.hash.includes("collections/projects")) {
+            previewUrl = "https://ai.gov.uk/projects/preview";
+          } else if (window.location.hash.includes("collections/evals")) {
+            previewUrl = "https://ai.gov.uk/evaluations/consult-evaluation-dwps-pathways-to-work-consultation/";
+          } else if (window.location.hash.includes("collections/website_content/entries/home_page")) {
+            previewUrl = "https://ai.gov.uk/";
+          } else if (window.location.hash.includes("collections/website_content/entries/aboutUs")) {
+            previewUrl = "https://ai.gov.uk/about";
+          } else if (window.location.hash.includes("collections/website_content/entries/ourWork")) {
+            previewUrl = "https://ai.gov.uk/";
+          } else if (window.location.hash.includes("collections/website_content/entries/insights")) {
+            previewUrl = "https://ai.gov.uk/insights";
+          } else if (window.location.hash.includes("collections/website_content/entries/careers")) {
+            previewUrl = "https://ai.gov.uk/opportunities";
+          } else if (window.location.hash.includes("collections/our_work_projects")) {
+            previewUrl = "https://ai.gov.uk/our-work/planning#extract";
+          } else if (window.location.hash.includes("collections/knowledge_hub_site_content/entries/landing_page")) {
+            previewUrl = "https://knowledge-hub-internal.dev.i.ai.gov.uk?entry=cms/knowledge_hub_site_content/landing_page";
+          } else if (window.location.hash.includes("collections/knowledge_hub_site_content/entries/about")) {
+            previewUrl = "https://knowledge-hub-internal.dev.i.ai.gov.uk/about?entry=cms/knowledge_hub_site_content/about";
+          } else if (window.location.hash.includes("collections/knowledge_hub_site_content/entries/tools")) {
+            previewUrl = "https://knowledge-hub-internal.dev.i.ai.gov.uk/tools?entry=cms/knowledge_hub_site_content/tools";
+          } else if (window.location.hash.includes("collections/knowledge_hub_site_content/entries/prompts")) {
+            previewUrl = "https://knowledge-hub-internal.dev.i.ai.gov.uk/prompts?entry=cms/knowledge_hub_site_content/prompts";
+          } else if (window.location.hash.includes("collections/knowledge_hub_site_content/entries/how_tos")) {
+            previewUrl = "https://knowledge-hub-internal.dev.i.ai.gov.uk/how-tos?entry=cms/knowledge_hub_site_content/how_tos";
+          } else if (window.location.hash.includes("collections/knowledge_hub_site_content/entries/coo_registry")) {
+            previewUrl = "https://knowledge-hub-internal.dev.i.ai.gov.uk/directory?entry=cms/knowledge_hub_site_content/coo_registry";
+          } else if (window.location.hash.includes("collections/knowledge_hub_site_content/entries/cookie_policy")) {
+            previewUrl = "https://knowledge-hub-internal.dev.i.ai.gov.uk/cookie-policy?entry=cms/knowledge_hub_site_content/cookie_policy";
+          } else if (window.location.hash.includes("collections/knowledge_hub_guidance_pages")) {
+            const slug = getSlug('how-to-use-ai-at-work', false);
+            previewUrl = `https://knowledge-hub-internal.dev.i.ai.gov.uk/how-to/${slug}/${entryTitle === 'new' ? '' : `?entry=cms/${collection}/${entryTitle}`}`;
+          } else if (window.location.hash.includes("/collections/knowledge_hub_prompts") || window.location.hash.includes("/collections/knowledge_hub_internal_prompts")) {
+            const slug = getSlug('explain-a-complex-topic-for-a-beginner');
+            previewUrl = `https://knowledge-hub-internal.dev.i.ai.gov.uk/prompts/${slug}/${entryTitle === 'new' ? '' : `?entry=cms/${collection}/${entryTitle}`}`;
+          } else if (window.location.hash.includes("/collections/knowledge_hub_tools") || window.location.hash.includes("/collections/knowledge_hub_internal_tools")) {
+            const slug = getSlug('mia');
+            previewUrl = `https://knowledge-hub-internal.dev.i.ai.gov.uk/tools/${slug}/${entryTitle === 'new' ? '' : `?entry=cms/${collection}/${entryTitle}`}`;
+          } else if (window.location.hash.includes("/collections/knowledge_hub_capabilities")) {
+            const slug = getSlug('create-and-review-documents');
+            previewUrl = `https://knowledge-hub-internal.dev.i.ai.gov.uk/capability/${slug}/${entryTitle === 'new' ? '' : `?entry=cms/${collection}/${entryTitle}`}`;
+          } else if (window.location.hash.includes("/collections/knowledge_hub_professions")) {
+            const slug = getSlug('policy');
+            previewUrl = `https://knowledge-hub-internal.dev.i.ai.gov.uk/profession/${slug}/${entryTitle === 'new' ? '' : `?entry=cms/${collection}/${entryTitle}`}`;
+          }
+          return h('div', {},
+            h('iframe', {
+              src: previewUrl,
+              ref: (iframe) => { this.iframe = iframe; }
+            })
+          );
+        }
+      });
+
+      CMS.registerPreviewTemplate("blogs", Preview);
+      CMS.registerPreviewTemplate("evals", Preview);
+      CMS.registerPreviewTemplate("projects", Preview);
+      CMS.registerPreviewTemplate("knowledge_hub_guidance_pages", Preview);
+      CMS.registerPreviewTemplate("home_page", Preview);
+      CMS.registerPreviewTemplate("aboutUs", Preview);
+      CMS.registerPreviewTemplate("ourWork", Preview);
+      CMS.registerPreviewTemplate("insights", Preview);
+      CMS.registerPreviewTemplate("careers", Preview);
+      CMS.registerPreviewTemplate("our_work_projects", Preview);
+      CMS.registerPreviewTemplate("landing_page", Preview);
+      CMS.registerPreviewTemplate("about", Preview);
+      CMS.registerPreviewTemplate("tools", Preview);
+      CMS.registerPreviewTemplate("prompts", Preview);
+      CMS.registerPreviewTemplate("how_tos", Preview);
+      CMS.registerPreviewTemplate("coo_registry", Preview);
+      CMS.registerPreviewTemplate("cookie_policy", Preview);
+      CMS.registerPreviewTemplate("knowledge_hub_prompts", Preview);
+      CMS.registerPreviewTemplate("knowledge_hub_internal_prompts", Preview);
+      CMS.registerPreviewTemplate("knowledge_hub_tools", Preview);
+      CMS.registerPreviewTemplate("knowledge_hub_internal_tools", Preview);
+      CMS.registerPreviewTemplate("knowledge_hub_capabilities", Preview);
+      CMS.registerPreviewTemplate("knowledge_hub_professions", Preview);
+      CMS.registerPreviewStyle(`
+        iframe {
+          width: 100%;
+          height: calc(100vh - 1rem);
+        }
+      `, { raw: true });
+
+      {% if envs.buildHook %}
+        CMS.registerEventListener({
+          name: "prePublish",
+          handler: () => {
+            // Trigger Netlify build hook
+            fetch("{{ envs.buildHook }}", {
+              method: "POST"
+            });
+          }
+        });
+      {% endif %}
+
+      // Set timestamps
+      CMS.registerEventListener({
+        name: "preSave",
+        handler: ({ entry }) => {
+          if( !entry.get("data").get("created") ) {
+            return entry.get("data").set("created", Date.now().toString())
+          }
+        }
+      });
+      CMS.registerEventListener({
+        name: "preSave",
+        handler: ({ entry }) => {
+          return entry.get("data").set("updated", Date.now().toString())
+        }
+      });
+
+      CMS.registerEventListener({
+        name: 'postPublish',
+        handler: async ({ entry }) => {
+          const collection = entry.get('collection');
+          
+          if (!collection.includes('knowledge_hub')) {
+            return;
+          }
+
+          const slug = entry.get('slug');
+          
+          const repo = 'i-dot-ai/ai-gov-uk-cms-content';
+          const branch = `cms/${collection}/${slug}`;
+          let prUrl = '';
+
+          try {
+            const response = await fetch(`https://api.github.com/repos/${repo}/pulls?head=i-dot-ai:${branch}&state=closed`, {
+              headers: {
+                Authorization: `token {{ envs.cmsContentRepoToken }}`,
+                "X-GitHub-Api-Version": "2022-11-28",
+              },
+            });
+            const data = await response.json();
+
+            if (data.length === 0) {
+              throw new Error('No pull request found');
+            }
+
+            prUrl = data[0].html_url;
+          } catch (error) {
+            console.error('error', error);
+          }
+
+          if (!prUrl) {
+            return;
+          }
+
+          const addCommentToPRDialog = document.createElement('div');
+          addCommentToPRDialog.innerHTML = `
+            <div 
+              role="alertdialog"
+              aria-modal="true"
+              aria-labelledby="add-comment-to-pr-dialog-title"
+              style="
+                position: fixed;
+                top: 8px;
+                right: 72px;
+                color: #000;
+                padding: 16px 20px;
+                background: #fff;
+                border-radius: 8px;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+                font-family: sans-serif;
+                font-size: 14px;
+                z-index: 1000;
+                display: flex;
+                align-items: center;
+                gap: 12px;
+              "
+            >
+              <p id="add-comment-to-pr-dialog-title" style="margin: 0;">📝 Want to leave a publish note? Leave a comment on the PR.</p>
+              <a href="${prUrl}" target="_blank" style="
+                color: #000;
+                font-weight: bold;
+                text-decoration: underline;
+              ">View PR</a>
+              <span id="cms-banner-close" aria-label="Close" style="cursor:pointer;">✕</span>
+            </div>
+          `;
+
+          document.body.appendChild(addCommentToPRDialog);
+
+          navigation.addEventListener('navigate', (event) => {
+            addCommentToPRDialog.remove();
+          });
+          addCommentToPRDialog.querySelector('#cms-banner-close').addEventListener('click', () => {
+            addCommentToPRDialog.remove();
+          });
+        }
+      });
+
+    </script>
+
+    {# Old comments
+    <script src="/components/comments.js"></script>
+    <script src="/components/video.js"></script>
+    #}
+
+    {# New comments
+    {% include "./components/comments.njk" %}
+    #}
+
+  </body>
+</html>

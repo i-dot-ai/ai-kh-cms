@@ -1,0 +1,1268 @@
+---
+  permalink: "/config.yml"
+---
+
+{% macro standardComponents() %}
+        - label: "Text Component"
+          name: "bodyText"
+          widget: "object"
+          hint: "<!-- comments can be added like this -->"
+          fields:
+            - label: "Content"
+              name: "content"
+              widget: "markdown"
+              buttons: ["bold", "italic", "code", "link", "heading-two", "heading-three", "heading-four", "quote", "bulleted-list", "numbered-list"]
+        - label: "Video"
+          name: "video"
+          widget: "object"
+          fields:
+            - label: "URL"
+              name: "source"
+              widget: "string"
+            - label: "Audio Description URL"
+              name: "audioDescription"
+              widget: "string"
+              required: false
+{% endmacro %}
+
+{% macro knowledgeHubTools() %}
+    slug: "{{title}}"
+    fields: 
+      - label: "Title"
+        name: "title"
+        widget: "string"
+      - label: "Created"
+        name: "created"
+        widget: "hidden"
+      - label: "Updated"
+        name: "updated"
+        widget: "hidden"
+      - label: "Category"
+        name: "category"
+        widget: "select"
+        required: false
+        options: ["Find information", "Create and review documents", "Triage and route information", "Analyse data and text", "Run meetings and appointments", "Collect and clean data", "Digitise documents"]
+      - label: "Subcategory"
+        name: "subcategory"
+        widget: "select"
+        options: ["General tasks (most common)", "Predict and forecast information", "Transcribe discussions", "Identify themes and trends", "Check compliance and standards", "Reports and business documents", "Teaching aides and resources"]
+        required: false
+      - label: "Draft"
+        name: "draft"
+        widget: "boolean"
+        default: false
+        required: false
+      - label: "Synopsis"
+        name: "synopsis"
+        widget: "string"
+        required: false
+      - label: "Organisation"
+        name: "organisation"
+        widget: "string"
+        required: false
+        hint: "Separate multiple organisations with a slash (/)"
+      - label: "Government body"
+        name: "governmentBody"
+        widget: "select"
+        options: ["UK Government", "Local Government", "Scottish Government", "Welsh Government", "Northern Ireland Government"]
+        required: false
+      - label: "User Group"
+        name: "userGroup"
+        widget: "select"
+        options: ["Civil servants", "Wider public sector", "General public"]
+        required: false
+      - label: "Open source"
+        name: "openSource"
+        widget: "boolean"
+        default: false
+        required: false
+      - label: "Use case Type"
+        name: "useCaseType"
+        widget: "select"
+        options: ["Reusable", "Specific"]
+        required: false
+      - label: "Type of technology"
+        name: "typeOfTechnology"
+        widget: "select"
+        options: ["Generative AI", "Machine learning", "Data or Infrastructure"]
+        required: false
+        multiple: true
+      - label: "Phase"
+        name: "phase"
+        widget: "select"
+        options: ["Alpha", "Beta", "Live", "Retired"]
+        required: false
+      - label: "Impact"
+        name: "impact"
+        widget: "select"
+        options: ["Time savings", "Cost savings", "Improved efficiency", "Better Customer experience"]
+        required: false
+        multiple: true
+      - label: "Challenge"
+        name: "challenge"
+        widget: "markdown"
+        required: false
+      - label: "Solution"
+        name: "solution"
+        widget: "markdown"
+        required: false
+      - label: "Results"
+        name: "results"
+        widget: "markdown"
+        required: false
+      - label: "Learnings"
+        name: "learnings"
+        widget: "markdown"
+        required: false
+      - label: "Links"
+        name: "links"
+        widget: "list"
+        required: false
+        fields:
+          - label: "Link Text"
+            name: "text"
+            widget: "string"
+          - label: "Link url"
+            name: "url"
+            widget: "string"
+
+{% endmacro %}
+
+{% macro knowledgeHubPrompts() %}
+    fields: 
+      - label: "Title"
+        name: "title"
+        widget: "string"
+      - label: "Created"
+        name: "created"
+        widget: "hidden"
+      - label: "Updated"
+        name: "updated"
+        widget: "hidden"
+      - label: "Description"
+        name: "description"
+        widget: "string"
+      - label: "Hide from live site"
+        name: "hideFromLiveSite"
+        widget: "boolean"
+        default: false
+        required: false
+      - label: "Category"
+        name: "category"
+        widget: "select"
+        options: ["Find information", "Create and review documents", "Triage and route information", "Analyse data and text", "Run meetings and appointments", "Collect data and information","Digitise documents", "Learning and development"]
+      - label: "Subcategory"
+        name: "subcategory"
+        widget: "select"
+        options: ["General tasks", "Reports and business documents", "Teaching aides and resources", "Strategy and planning documents", "Design and user research resources", "Identify themes and trends", "Check compliance and standards", "Predict and forecast information", "Transcribe discussions", "Translate discussions", "Prompt development", "Personal development", "Personal productivity"]
+        required: false
+      - label: "Tags"
+        name: "tags"
+        widget: "string"
+        required: false
+        hint: "Use a comma to separate multiple tags"
+      - label: "Verfied"
+        name: "verified"
+        widget: "boolean"
+        default: true
+        required: false
+      - label: "Content"
+        name: "content"
+        widget: "markdown"
+        required: false
+      - label: "Prompt"
+        name: "prompt"
+        widget: "markdown"
+        required: false
+      - label: "Feedback"
+        name: "feedback"
+        widget: "markdown"
+        required: false
+{% endmacro %}
+
+backend:
+  name: {% if envs.runMode == "serve" %}test-repo{% else %}github{% endif %}
+  repo: i-dot-ai/ai-kh-cms-content
+  use_graphql: true
+  squash_merges: true
+publish_mode: editorial_workflow
+open_authoring: true
+media_folder: "static/images/uploads" # Media files will be stored in the repo under static/images/uploads
+public_folder: "/images/uploads" # The src attribute for uploaded media will begin with /images/uploads
+logo_url: "/public/iai_white-on-black.svg" 
+collections:
+  
+  - label: "Authors"
+    name: "authors"
+    folder: "content/authors"
+    create: true
+    slug: "{{name}}"
+    fields:
+      - label: "Name"
+        name: "name"
+        widget: "string"
+      - label: "Job Title"
+        name: "jobTitle"
+        widget: "string"
+      - label: "Picture"
+        name: "picture"
+        widget: "image"
+        required: false
+      - label: "LinkedIn URL"
+        name: "linkedinUrl"
+        widget: "string"
+        required: false
+  
+  - label: "Blogs"
+    name: "blogs"
+    folder: "content/blogs"
+    create: true
+    slug: "{{title}}"
+    fields: 
+      - label: "Title"
+        name: "title"
+        widget: "string"
+      - label: "Technical blog"
+        name: "technicalBlog"
+        widget: "boolean"
+        default: false
+        required: false
+      - label: "Date"
+        name: "date"
+        widget: "datetime"
+        date_format: "YYYY-MM-DD"
+        default: "{{now}}"
+      - label: "Summary (hub page)"
+        name: "summaryHubPage"
+        widget: "string"
+        pattern: ['^.{1,256}$', "Required. 256 characters max"]
+        hint: "A one sentence summary of the blog post (to be shown on the main hub page) - 256 characters max"
+      - label: "Summary (blog page)"
+        name: "summaryBlogPage"
+        widget: "text"
+        required: false
+        hint: "Opening paragraph of blog (can be same as above summary or slightly longer)"
+      - label: "Lead Image"
+        name: "leadImage"
+        widget: "image"
+        allow_multiple: false
+      - label: "Lead Image Alt Text"
+        name: "leadImageAlt"
+        widget: "string"
+      - label: "Lead Image Caption"
+        name: "leadImageCaption"
+        widget: "string"
+        required: false
+      - label: "Authors"
+        name: "authors"
+        widget: "list"
+        fields:
+          - label: "Author"
+            name: "author"
+            widget: "relation"
+            collection: "authors"
+            value_field: "name"
+            search_fields: ["name", "job-title"]
+            display_fields: ["name", "job-title"]
+      - label: "Components"
+        name: "components"
+        widget: "list"
+        types:
+        {{ standardComponents() }}
+        - label: "Infographic"
+          name: "infographic"
+          widget: "object"
+          fields:
+            - label: "Type"
+              name: "infographicType"
+              widget: "select"
+              options: ["First 12 months"]
+              default: "First 12 months"
+        - label: "Carousel"
+          name: "carousel"
+          widget: "object"
+          fields:
+            - label: "Carousel title"
+              name: "carouselTitle"
+              widget: "string"
+            - label: "Carousel title heading level"
+              name: "carouselTitleHeadingLevel"
+              widget: "select"
+              options: ["h2", "h3", "h4"]
+              default: "h3"
+            - label: "Items"
+              name: "carouselItems"
+              widget: "list"
+              fields:
+                - label: "Content"
+                  name: "carouselContent"
+                  widget: "markdown"
+                  hint: "Only the last item is shown in preview (for now)"
+        - label: "Project types"
+          name: "projectTypes"
+          widget: "object"
+          fields:
+            - label: "Type"
+              name: "projectType"
+              widget: "select"
+              options: ["The i.AI Taxonomy"]
+              default: "The i.AI Taxonomy"
+        - label: "Lex slide"
+          name: "lexSlide"
+          widget: "object"
+          fields:
+            - label: "Type"
+              name: "lexSlideType"
+              widget: "select"
+              options: ["United Kingdom Internal Market Act 2020"]
+              default: "United Kingdom Internal Market Act 2020"
+  
+  - label: "Evaluation Reports"
+    name: "evals"
+    folder: "content/evals"
+    create: true
+    fields:
+      - label: "Title"
+        name: "title"
+        widget: "string"
+      - label: "Summary"
+        name: "summary"
+        widget: "string"
+        required: false
+      - label: "Content"
+        name: "content"
+        required: false
+        widget: "markdown"
+      - label: "Date"
+        name: "date"
+        widget: "datetime"
+        required: false
+        date_format: "YYYY-MM-DD"
+        default: "{{now}}"
+      - label: "Link URL"
+        name: "linkUrl"
+        widget: "string"
+        required: false
+      - label: "Link Text"
+        name: "linkText"
+        widget: "string"
+        required: false
+      - label: "Lead Image"
+        name: "leadImage"
+        required: false
+        widget: "image"
+        allow_multiple: false
+      - label: "Lead Image Alt Text"
+        name: "leadImageAlt"
+        widget: "string"
+        required: false
+      - label: "Lead Image Caption"
+        name: "leadImageCaption"
+        widget: "string"
+        required: false
+
+  - label: "Reports"
+    name: "reports"
+    folder: "content/reports"
+    create: true
+    fields:
+      - label: "Title"
+        name: "title"
+        widget: "string"
+      - label: "Summary"
+        name: "summary"
+        widget: "string"
+        required: false
+      - label: "Date"
+        name: "date"
+        required: false
+        widget: "datetime"
+        date_format: "YYYY-MM-DD"
+        default: "{{now}}"
+      - label: "Content"
+        name: "content"
+        widget: "markdown"
+      - label: "Lead Image"
+        name: "leadImage"
+        required: false
+        widget: "image"
+        allow_multiple: false
+      - label: "Lead Image Alt Text"
+        name: "leadImageAlt"
+        widget: "string"
+        required: false
+      - label: "Lead Image Caption"
+        name: "leadImageCaption"
+        widget: "string"
+        required: false
+
+  - label: "FAQs"
+    name: "faqs"
+    folder: "content/faqs"
+    create: false
+    fields:
+      - label: "Title"
+        name: "title"
+        widget: "string"
+        default: "FAQs"
+      - label: "Headings"
+        name: "headings"
+        widget: "list"
+        fields:
+          - label: "Heading"
+            name: "heading"
+            widget: "string"
+          - label: "Questions"
+            name: "questions"
+            widget: "list"
+            fields:
+              - label: "Question text"
+                name: "questionText"
+                widget: "string"
+              - label: "Response"
+                name: "response"
+                widget: "markdown"
+                buttons: ["bold", "link", "bulleted-list", "numbered-list"]
+                
+  - label: "Website content"
+    name: "website_content"
+    files:
+      - label: "Home page"
+        name: "home_page"
+        file: "content/website_content/home_page.yaml"
+        fields:
+          - label: "Title"
+            name: "title"
+            widget: "string"
+          - label: "Leading paragraph"
+            name: "leadingParagraph"
+            required: false
+            widget: "string"
+          - label: "Hero Image"
+            name: "heroImage"
+            widget: "image"
+            required: false
+          - label: "Hero Image Alt Text"
+            name: "heroImageAltText"
+            widget: "string"
+            required: false
+          - label: "Quotes"
+            name: "quotes"
+            hint: "2 quotes to be shown on the home page"
+            widget: "list"
+            required: false
+            fields:
+              - label: "Quote Text"
+                name: "quoteText"
+                widget: "string"
+              - label: "Author Name"
+                name: "authorName"
+                widget: "string"
+              - label: "Author Job Title"
+                name: "authorJobTitle"
+                widget: "string"
+          - label: "We're hiring paragraph"
+            name: "weAreHiringParagraph"
+            required: false
+            widget: "markdown"
+          - label: "We're hiring link text"
+            name: "weAreHiringLinkText"
+            required: false
+            widget: "string"
+          - label: "We're hiring link URL"
+            name: "weAreHiringLinkUrl"
+            required: false
+            widget: "string"
+          - label: "Our Principles"
+            name: "ourPrinciples"
+            hint: "3 principles to be shown on the home page"
+            widget: "list"
+            required: false
+            fields:
+              - label: "Principle Title"
+                name: "principleTitle"
+                widget: "string"
+              - label: "Principle Description"
+                name: "principleDescription"
+                widget: "string"
+              - label: "Principle Image"
+                name: "principleImage"
+                widget: "image"
+                required: false
+      - label: "About us"
+        name: "aboutUs"
+        file: "content/website_content/about_us.yaml"
+        fields:
+          - label: "Title"
+            name: "title"
+            widget: "string"
+          - label: "Leading paragraph"
+            name: "leadingParagraph"
+            required: false
+            widget: "string"
+          - label: "Secondary paragraph"
+            name: "secondaryParagraph"
+            required: false
+            widget: "string"
+            hint: "An additional secondary paragraph that will only show on desktop screens"
+          - label: "Hero Image"
+            name: "heroImage"
+            widget: "image"
+            required: false
+          - label: "Hero Image Alt Text"
+            name: "heroImageAltText"
+            widget: "string"
+            required: false
+          - label: "Timeline"
+            name: "timeline"
+            widget: "list"
+            required: false
+            fields:
+              - label: "Date"
+                name: "date"
+                widget: "string"
+                required: false
+              - label: "Description"
+                name: "description"
+                widget: "string"
+                required: false
+          - label: "What we do"
+            name: "whatWeDo"
+            widget: "list"
+            required: false
+            fields:
+              - label: "Title"
+                name: "title"
+                widget: "string"
+              - label: "Content"
+                name: "content"
+                widget: "markdown"
+          - label: "Sections"
+            name: "sections"
+            widget: "list"
+            required: false
+            fields:
+              - label: "Title"
+                name: "title"
+                required: false
+                widget: "string"
+              - label: "Content"
+                name: "content"
+                required: false
+                widget: "markdown"
+      - label: "Our Work"
+        name: "ourWork"
+        file: "content/website_content/our_work.yaml"
+        fields:
+          - label: "Categories"
+            name: "categories"
+            hint: "Populate for all categories: Planning, Education, Government, Frontline Services, Open Source"
+            widget: "list"
+            fields:
+              - label: "Title"
+                name: "title"
+                widget: "select"
+                options: ["Planning", "Education", "Government", "Frontline Services", "Open Source"]
+              - label: "Short description"
+                name: "shortDescription"
+                required: false
+                widget: "string"
+              - label: "Leading paragraph"
+                name: "leadingParagraph"
+                required: false
+                widget: "string"
+                hint: "A leading paragraph that will appear on the landing page of the category"
+              - label: "Hide from live site"
+                name: "hideFromLiveSite"
+                widget: "boolean"
+                default: false
+      - label: "Insights"
+        name: "insights"
+        file: "content/website_content/insights.yaml"
+        fields:
+          - label: "Title"
+            name: "Title"
+            widget: "string"
+          - label: "Leading paragraph"
+            name: "leadingParagraph"
+            required: false
+            widget: "string"
+          - label: "Hero Image"
+            name: "heroImage"
+            widget: "image"
+            required: false
+          - label: "Hero Image Alt Text"
+            name: "heroImageAltText"
+            widget: "string"
+            required: false
+      - label: "Careers"
+        name: "careers"
+        file: "content/website_content/careers.yaml"
+        fields:
+          - label: "Title"
+            name: "title"
+            widget: "string"
+          - label: "Leading paragraph"
+            name: "leadingParagraph"
+            required: false
+            widget: "string"
+          - label: "Secondary paragraph"
+            name: "secondaryParagraph"
+            required: false
+            widget: "string"
+            hint: "An additional secondary paragraph that will only show on desktop screens"
+          - label: "Hero Image"
+            name: "heroImage"
+            widget: "image"
+            required: false
+          - label: "Hero Image Alt Text"
+            name: "heroImageAltText"
+            widget: "string"
+            required: false
+          - label: "CTAs"
+            name: "ctas"
+            widget: "list"
+            required: false
+            fields:
+              - label: "Link text"
+                name: "linkText"
+                widget: "string"
+              - label: "Link url"
+                name: "linkUrl"
+                widget: "string"
+          - label: "Why Join Us - Paragraph 1"
+            name: "whyJoinUs"
+            widget: "markdown"
+            required: false
+          - label: "Why Join Us - Sections"
+            name: "whyJoinUsSections"
+            widget: "list"
+            required: false
+            fields:
+              - label: "Title"
+                name: "title"
+                widget: "string"
+              - label: "Content"
+                name: "content"
+                widget: "markdown"
+          - label: "Images"
+            name: "images"
+            widget: "list"
+            hint: "3 images to be shown on the careers page"
+            required: false
+            fields:
+              - label: "Image"
+                name: "image"
+                widget: "image"
+              - label: "Image alt text"
+                name: "imageAltText"
+                widget: "string"
+          - label: "Principles"
+            name: "principles"
+            widget: "list"
+            required: false
+            fields:
+              - label: "Title"
+                name: "title"
+                widget: "string"
+              - label: "Description"
+                name: "description"
+                widget: "string"
+              - label: "Image"
+                name: "image"
+                widget: "image"
+                required: false
+          - label: "Testimonials"
+            name: "testimonials"
+            required: false
+            widget: "list"
+            hint: "5 testimonials to be shown on the careers page"
+            fields:
+              - label: "Quote Text"
+                name: "quoteText"
+                widget: "markdown"
+              - label: "Author Name"
+                name: "authorName"
+                widget: "string"
+              - label: "Author Job Title"
+                name: "authorJobTitle"
+                widget: "string"
+
+  - label: "Projects (new website)"
+    name: "our_work_projects"
+    folder: "content/our_work_projects"
+    create: true
+    fields:
+      - label: "Title"
+        name: "title"
+        widget: "string"
+      - label: "Short Description"
+        name: "short_description"
+        widget: "string"
+        hint: "A short sentence that will appear on the home page"
+      - label: "Project Page Tag Line"
+        name: "projectPageTagLine"
+        hint: "A tag line that will appear on the project page"
+        widget: "string"
+      - label: "Featured"
+        name: "featured"
+        widget: boolean
+        default: false
+        hint: "If true will be shown on the homepage, there should be 2 featured projects per category"
+      - label: "category"
+        name: "category"
+        widget: "select"
+        options: ["Planning", "Education", "Government", "Frontline Services", "Open Source"]
+      - label: "Phase"
+        name: "phase"
+        widget: "select"
+        required: false
+        options: ["Discovery", "Alpha", "Beta", "Scaling", "Live", "Retired", "Published"]
+      - label: "Type"
+        name: "type"
+        widget: "select"
+        required: false
+        options: ["Tool", "Benchmark", "Trials", "Research", "Repository", "Data architecture", "Fellowship"]
+      - label: "Partner led"
+        name: "partner_led"
+        widget: boolean
+        default: false
+      - label: "Collaborator"
+        name: "collaborator"
+        widget: "string"
+        required: false
+      - label: "Image"
+        name: "image"
+        widget: "image"
+        required: false
+      - label: "Image Alt Text"
+        name: "imageAltText"
+        widget: "string"
+        required: false
+      - label: "Image Caption"
+        name: "imageCaption"
+        widget: "string"
+        required: false
+      - label: "Second Image"
+        name: "secondImage"
+        widget: "image"
+        hint: "An optional second image to be shown on the project page: normally to replace video below"
+        required: false
+      - label: "Second Image Alt Text"
+        name: "secondImageAltText"
+        widget: "string"
+        required: false
+      - label: "Second Image Caption"
+        name: "secondImageCaption"
+        widget: "string"
+        required: false
+      - label: "Video"
+        name: "video"
+        widget: "object"
+        required: false
+        fields:
+          - label: "URL"
+            name: "source"
+            widget: "string"
+            required: false
+          - label: "Audio Description URL"
+            name: "audioDescription"
+            widget: "string"
+            required: false
+      - label: "About"
+        name: "about"
+        widget: "markdown"
+      - label: "Latest"
+        name: "latest"
+        widget: "markdown"
+        required: false
+      - label: "Key Links"
+        name: "key_links"
+        widget: "list"
+        required: false
+        types:
+          - label: "Read More Link"
+            name: "read_more"
+            widget: "object"
+            required: false
+            fields:
+              - label: "Link text"
+                name: "link_text"
+                widget: "string"
+              - label: "Link url"
+                name: "link_url"
+                widget: "string"
+          - label: "Open Source Link"
+            name: "open_source"
+            widget: "object"
+            required: false
+            fields:
+              - label: "Link text"
+                name: "link_text"
+                widget: "string"
+              - label: "Link url"
+                name: "link_url"
+                widget: "string"
+          - label: "Other Link"
+            name: "other_link"
+            widget: "object"
+            required: false
+            fields:
+              - label: "Link Label"
+                name: "link_label"
+                widget: "string"
+              - label: "Link text"
+                name: "link_text"
+                widget: "string"
+              - label: "Link url"
+                name: "link_url"
+                widget: "string"
+
+  - label: "Projects"
+    name: "projects"
+    folder: "content/projects"
+    create: true
+    slug: "{{title}}"
+    fields: 
+      - label: "Title"
+        name: "title"
+        widget: "string"
+      - label: "Project Stage"
+        name: "project-stage"
+        widget: "select"
+        options: ["Live Development", "Handed Over", "Paused Development"]
+        default: "Live Development"
+      - label: "Partner Organisation (For Handed Over projects)"
+        name: "partner"
+        widget: "string"
+        required: false
+      - label: "Phase"
+        name: "phase"
+        widget: "select"
+        options: ["Paused", "Incubation", "Alpha", "Beta", "Scaling", "N/A"]
+        default: "Incubation"
+      - label: "Summary (hub page)"
+        name: "summaryHubPage"
+        widget: "string"
+        pattern: ['^.{1,256}$', "Required. 256 characters max"]
+        hint: "A one sentence summary (to be shown on the main hub page) - 256 characters max"
+      - label: "Summary (project page)"
+        name: "summaryProjectPage"
+        widget: "text"
+        hint: "A summary to be shown in the header (can be same as above summary or slightly longer)"
+      - label: "Key facts"
+        name: "keyFacts"
+        widget: "markdown"
+        required: false
+        hint: "This shows in a panel to the right on the project page"
+      - label: "Lead Image"
+        name: "leadImage"
+        widget: "image"
+        allow_multiple: false
+        hint: "For hub page and social media (not shown on actual page)"
+      - label: "Register your interest"
+        name: "registerInterest"
+        widget: "object"
+        hint: "This information shows on the Register Your Interest page"
+        fields:
+          - label: "Current availability"
+            name: "currentAvailability"
+            widget: "markdown"
+            required: false
+          - label: "Where to apply"
+            name: "whereToApply"
+            widget: "markdown"
+            required: false
+          - label: "Github link"
+            name: "githubLink"
+            widget: "string"
+            required: false
+      - label: "Components"
+        name: "components"
+        widget: "list"
+        types:
+        {{ standardComponents() }}
+        - label: "Double-column"
+          name: "doubleColumn"
+          widget: "object"
+          fields:
+            - label: "Order"
+              name: "order"
+              widget: "select"
+              options: ["Text (left) - Image (right)", "Image (left) - Text (right)"]
+              default: "Text (left) - Image (right)"
+            - label: "Content"
+              name: "content"
+              widget: "markdown"
+              buttons: ["bold", "italic", "code", "link", "heading-two", "heading-three", "heading-four", "quote", "bulleted-list", "numbered-list"]
+              editor_components: ["code-block", "comment"]
+            - label: "Image"
+              name: "image"
+              widget: "image"
+              allow_multiple: false
+              choose_url: false
+            - label: "Image alt text"
+              name: "imageAlt"
+              widget: "text"
+              required: false
+            - label: "Image caption"
+              name: "imageCaption"
+              widget: "text"
+              required: false
+        - label: "Quote"
+          name: "quote"
+          widget: "object"
+          fields:
+            - label: "Quote"
+              name: "quote"
+              widget: "string"
+            - label: "Author"
+              name: "author"
+              widget: "string"
+            - label: "Link"
+              name: "link"
+              widget: "string"
+
+  - label: "Jobs"
+    name: "jobs"
+    folder: "content/jobs"
+    create: true
+    slug: "{{title}}"
+    fields: 
+      - label: "Title"
+        name: "title"
+        widget: "string"
+      - label: "Grade"
+        name: "grade"
+        widget: "string"
+        required: false
+      - label: "Salary"
+        name: "salary"
+        widget: "string"
+        required: false
+      - label: "Location"
+        name: "location"
+        widget: "string"
+        required: false
+      - label: "Link"
+        name: "link"
+        widget: "string"
+        hint: "Link to the Civil Service Jobs page"
+      - label: "Headline"
+        name: "headline"
+        widget: "text"
+        required: false
+        pattern: ['^.{0,1000}$', "1000 characters max"]
+
+  - label: "Press mentions"
+    name: "press"
+    folder: "content/press"
+    create: true
+    slug: "{{headline}}"
+    fields: 
+      - label: "Headline"
+        name: "headline"
+        widget: "string"
+      - label: "Link"
+        name: "link"
+        widget: "string"
+      - label: "Date of publication"
+        name: "date"
+        widget: "datetime"
+        date_format: "YYYY-MM-DD"
+        default: "{{now}}"
+      - label: "Summary"
+        name: "summary"
+        widget: "text"
+      - label: "Media outlet"
+        name: "media"
+        widget: "string"
+        hint: "The name of the media outlet (used as alt-text for the logo)"
+      - label: "Logo"
+        name: "logo"
+        widget: "image"
+        allow_multiple: false
+        choose_url: false
+        hint: "The media outlet logo"
+
+  - label: "Knowledge Hub: Site Content"
+    name: "knowledge_hub_site_content"
+    files:
+      - label: "Landing page"
+        name: "landing_page"
+        file: "content/knowledge_hub/site_content/landing_page.yaml"
+        fields:
+          - label: "Title"
+            name: "title"
+            widget: "string"
+          - label: "Hero Tag line"
+            name: "heroTagLine"
+            widget: "string"
+            required: false
+          - label: "Second Heading"
+            name: "secondHeading"
+            widget: "string"
+            required: false
+          - label: "Second paragraph"
+            name: "secondParagraph"
+            required: false
+            widget: "markdown"
+      - label: "About"
+        name: "about"
+        file: "content/knowledge_hub/site_content/about.yaml"
+        fields: 
+          - label: "Title"
+            name: "title"
+            widget: "string"
+          - label: "Content"
+            name: "content"
+            widget: "markdown"
+            required: false
+      - label: "Tools Library"
+        name: "tools"
+        file: "content/knowledge_hub/site_content/tools.yaml"
+        fields: 
+          - label: "Title"
+            name: "title"
+            widget: "string"
+          - label: "Leading paragraph"
+            name: "leadingParagraph"
+            widget: "string"
+            required: false
+          - label: "Content"
+            name: "content"
+            widget: "markdown"
+            required: false
+          - label: "Warning text"
+            name: "warningText"
+            widget: "markdown"
+            required: false
+      - label: "Prompts Library"
+        name: "prompts"
+        file: "content/knowledge_hub/site_content/prompts.yaml"
+        fields: 
+          - label: "Title"
+            name: "title"
+            widget: "string"
+          - label: "Leading paragraph"
+            name: "leadingParagraph"
+            widget: "string"
+            required: false
+          - label: "Content"
+            name: "content"
+            widget: "markdown"
+            required: false
+          - label: "Warning text"
+            name: "warningText"
+            widget: "markdown"
+            required: false
+      - label: "How tos"
+        name: "how_tos"
+        file: "content/knowledge_hub/site_content/how_tos.yaml"
+        fields: 
+          - label: "Title"
+            name: "title"
+            widget: "string"
+          - label: "Leading paragraph"
+            name: "leadingParagraph"
+            widget: "string"
+            required: false
+          - label: "Content"
+            name: "content"
+            widget: "markdown"
+            required: false
+          - label: "Warning text"
+            name: "warningText"
+            widget: "markdown"
+            required: false
+      - label: "COO registry"
+        name: "coo_registry"
+        file: "content/knowledge_hub/site_content/coo_registry.yaml"
+        fields: 
+          - label: "Title"
+            name: "title"
+            widget: "string"
+          - label: "Leading paragraph"
+            name: "leadingParagraph"
+            widget: "string"
+            required: false
+          - label: "Content"
+            name: "content"
+            widget: "markdown"
+            required: false
+      - label: "Cookie Policy"
+        name: "cookie_policy"
+        file: "content/knowledge_hub/site_content/cookie_policy.yaml"
+        fields: 
+          - label: "Title"
+            name: "title"
+            widget: "string"
+          - label: "Internal Cookie Policy Content"
+            name: "internalContent"
+            widget: "markdown"
+            required: false
+          - label: "Public Cookie Policy Content"
+            name: "publicContent"
+            widget: "markdown"
+            required: false
+          - label: "Preference Radio Button"
+            name: "preferenceRadioButton"
+            widget: "object"
+            fields:
+              - label: "Preference Text"
+                name: "preferenceText"
+                widget: "string"
+              - label: "Accept Cookies Text"
+                name: "acceptCookiesText"
+                widget: "string"
+              - label: "Reject Cookies Text"
+                name: "rejectCookiesText"
+                widget: "string"
+
+  - label: "Knowledge Hub: Tools"
+    name: "knowledge_hub_tools"
+    folder: "content/knowledge_hub/tools"
+    create: true
+    {{ knowledgeHubTools() }}
+
+  - label: "Knowledge Hub: Prompts"
+    name: "knowledge_hub_prompts"
+    folder: "content/knowledge_hub/prompts"
+    create: true
+    slug: "{{title}}"
+    {{ knowledgeHubPrompts() }}
+
+  - label: "Knowledge Hub: Internal: Tools"
+    name: "knowledge_hub_internal_tools"
+    folder: "content/knowledge_hub/internal/tools"
+    create: true
+    {{ knowledgeHubTools() }}
+  
+  - label: "Knowledge Hub Internal: Prompts"
+    name: "knowledge_hub_internal_prompts"
+    folder: "content/knowledge_hub/internal/prompts"
+    create: true
+    slug: "{{title}}"
+    {{ knowledgeHubPrompts() }}
+      - label: "Synthesis Prompt"
+        name: "synthesisPrompt"
+        widget: "markdown"
+        required: false
+      - label: "Coach Prompt"
+        name: "coachPrompt"
+        widget: "markdown"
+        required: false
+      - label: "Policy Heading"
+        name: "policyHeading"
+        widget: "select"
+        options: ["Using evidence", "Drafting and editing", "Consultation", "Correspondence", "Quality assurance"]
+        required: false
+
+  - label: "Knowledge Hub: Capabilities"
+    name: "knowledge_hub_capabilities"
+    folder: "content/knowledge_hub/capabilities"
+    create: true
+    slug: "{{title}}"
+    fields: 
+      - label: "Title"
+        name: "title"
+        widget: "string"
+      - label: "Short description"
+        name: "shortDescription"
+        widget: "string"
+        required: false
+      - label: "Hide from live site"
+        name: "hideFromLiveSite"
+        widget: "boolean"
+        default: false
+        required: false
+      - label: "Description"
+        name: "description"
+        widget: "markdown"
+
+  - label: "Knowledge Hub: Professions"
+    name: "knowledge_hub_professions"
+    folder: "content/knowledge_hub/professions"
+    create: true
+    slug: "{{title}}"
+    fields: 
+      - label: "Title"
+        name: "title"
+        widget: "string"
+      - label: "Short description"
+        name: "shortDescription"
+        widget: "string"
+        required: false
+      - label: "Hide from live site"
+        name: "hideFromLiveSite"
+        widget: "boolean"
+        default: false
+        required: false
+      - label: "Content"
+        name: "content"
+        widget: "markdown"
+
+  - label: "Knowledge Hub: Guidance pages"
+    name: "knowledge_hub_guidance_pages"
+    folder: "content/knowledge_hub/guidance_pages"
+    create: true
+    slug: "{{title}}"
+    fields:
+      - label: "Title"
+        name: "title"
+        widget: "string"
+      - label: "Slug"
+        name: "slug"
+        widget: "string"
+        required: false
+        hint: "If not given, the slug will be generated from the title."
+      - label: "Description"
+        name: "description"
+        widget: "string"
+        required: false
+        hint: "If given, this will appear on the how to landing page"
+      - label: "Content"
+        name: "content"
+        widget: "markdown"
+      - label: "Using AI or Building AI?"
+        name: "usingAiOrBuildingAi"
+        widget: "select"
+        options: ["Using AI", "Building AI"]
+        required: false
+      - label: "Draft page"
+        name: "draftPage"
+        widget: "select"
+        options: ["Yes", "Yes from playbook", "No"]
+        default: "No"
+      - label: "Profession"
+        name: "profession"
+        widget: "select"
+        options: ["Policy"]
+        required: false
+
+  - label: "Internal KH: Use case directory"
+    name: "knowledge_hub_use_case_directory"
+    folder: "content/knowledge_hub/use_case_directory"
+    create: true
+    slug: "{{title}}"
+    fields: 
+      - label: "Sub function name"
+        name: "subFunctionName"
+        widget: "string"
+      - label: "description"
+        name: "description"
+        widget: "string"
+        required: false
+      - label: "Sponsor"
+        name: "sponsor"
+        widget: "string"
+        required: false
+      - label: "Function"
+        name: "function"
+        widget: "select"
+        options: ["Analysis","Commercial and grants","Communication","Counter fraud","Debt","Digital, data and technology","Finance","Internal audit","Legal","Operational delivery","People (human resources)","Policy","Project delivery","Property","Security",]
+        required: false
+      - label: "Use cases"
+        name: "useCases"
+        widget: "markdown"
+        required: false

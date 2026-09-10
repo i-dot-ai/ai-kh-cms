@@ -1,0 +1,21 @@
+{
+  "name": "ai-gov-uk-cms",
+  "version": "1.0.0",
+  "description": "Content Management System for ai.gov.uk website",
+  "main": "index.js",
+  "scripts": {
+    "serve": "npx @11ty/eleventy --serve"
+  },
+  "author": "",
+  "dependencies": {
+    "@11ty/eleventy": "^3.1.2",
+    "axios": "^1.16.1",
+    "dotenv": "^16.4.5",
+    "sharp": "^0.35.3"
+  },
+  "overrides": {
+    "minimatch@<=10.2.3": "10.2.3",
+    "picomatch@<=4.0.4": "4.0.4",
+    "liquidjs@<=10.25.7": "10.26.0"
+  }
+}
