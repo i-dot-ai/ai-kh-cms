@@ -4,7 +4,7 @@ const fs = require("fs");
 const path = require("path");
 const sharp = require('sharp');
 
-const CMS_REPO = "i-dot-ai/ai-gov-uk-cms-content";
+const CMS_REPO = "i-dot-ai/ai-kh-cms-content";
 const ASSETS_FOLDER = "./_site/assets";
 
 module.exports = (eleventyConfig) => {
